@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Zeno Life Medicare — Customer</title><link rel="stylesheet" href="style.css"></head>
+<body>
+<div class="app"><header class="topbar"><div class="brand-mini"><span class="logo sm">Z</span><b>Zeno Life Medicare</b></div><div><button id="cartBtn" class="ghost">Cart <span id="cartCount">0</span></button><button id="logout" class="ghost">Logout</button></div></header>
+<main class="customer-main"><section id="profileBox" class="hero-panel"></section>
+<section class="searchbar"><input id="search" placeholder="Search medicine, salt, strength, pack..."><span id="resultCount"></span></section>
+<div id="medicineGrid" class="medicine-grid"></div></main></div>
+<div id="cartModal" class="modal hidden"><div class="modal-card"><button class="close" id="closeCart">×</button><h2>Your Cart</h2><div id="cartItems"></div><div class="total-row">Grand Total <b id="cartTotal">₹0.00</b></div><button id="placeOrder" class="primary">Place Order</button><div id="cartMsg" class="msg"></div></div></div>
+<script type="module" src="customer.js"></script></body></html>

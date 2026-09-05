@@ -1,1 +1,70 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Zeno Admin</title><link rel="stylesheet" href="style.css"></head><body><div class="petals"></div><main class="center"><section class="card auth"><div class="logo">🌸</div><small>ZENO LIFE MEDICARE</small><h1>Admin Login</h1><form id="login"><input id="email" type="email" placeholder="Admin email" required><input id="password" type="password" placeholder="Password" required><button>Enter Dashboard</button><p id="msg"></p></form></section></main><script type="module" src="login.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Zeno Life Medicare</title><link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="blossoms"></div>
+<main class="auth-shell">
+  <section class="brand-card">
+    <div class="logo">Z</div>
+    <h1>Zeno Life Medicare</h1>
+    <p>Premium Medicine Distribution Portal</p>
+  </section>
+  <section class="login-card">
+    <div class="tabs"><button class="tab active" data-tab="customer">Customer</button><button class="tab" data-tab="admin">Admin</button></div>
+    <form id="customerForm" class="form">
+      <h2>Customer Login</h2><p class="muted">Use your Customer ID and password.</p>
+      <label>Customer ID<input id="customerId" required autocomplete="username"></label>
+      <label>Password<input id="customerPassword" type="password" required autocomplete="current-password"></label>
+      <button class="primary">Login</button><div id="customerMsg" class="msg"></div>
+    </form>
+    <form id="adminForm" class="form hidden">
+      <h2>Admin Login</h2><p class="muted">Use the email/password of the Firebase Admin account.</p>
+      <label>Admin ID / Email<input id="adminEmail" type="email" required autocomplete="username"></label>
+      <label>Password<input id="adminPassword" type="password" required autocomplete="current-password"></label>
+      <button class="primary">Admin Login</button><div id="adminMsg" class="msg"></div>
+    </form>
+  </section>
+</main>
+<script type="module">
+import {auth,db} from "./firebase.js";
+import {signInWithEmailAndPassword,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+import {doc,getDoc} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+const ADMIN_UID="s1qDKY8MuXN4pgi5k69WxSxLUkW2";
+const tabs=document.querySelectorAll(".tab"), cf=document.querySelector("#customerForm"), af=document.querySelector("#adminForm");
+tabs.forEach(t=>t.onclick=()=>{tabs.forEach(x=>x.classList.remove("active"));t.classList.add("active");cf.classList.toggle("hidden",t.dataset.tab!=="customer");af.classList.toggle("hidden",t.dataset.tab!=="admin")});
+const friendly=e=>{
+ const c=e?.code||"";
+ if(c.includes("invalid-credential")||c.includes("wrong-password")||c.includes("user-not-found")) return "Incorrect ID/email or password.";
+ if(c.includes("too-many-requests")) return "Too many attempts. Please try again later.";
+ if(c.includes("network")) return "Network error. Check your internet connection.";
+ return e?.message||"Login failed.";
+};
+document.querySelector("#customerForm").onsubmit=async e=>{
+ e.preventDefault(); const m=document.querySelector("#customerMsg"); m.textContent="Checking...";
+ const id=document.querySelector("#customerId").value.trim().toLowerCase(), pw=document.querySelector("#customerPassword").value;
+ if(!/^[a-z0-9._-]{3,40}$/.test(id)){m.textContent="Invalid Customer ID format.";return}
+ try{
+  const email=`${id}@customers.zenolifemedicare.local`;
+  const c=await signInWithEmailAndPassword(auth,email,pw);
+  const p=await getDoc(doc(db,"customers",c.user.uid));
+  if(!p.exists()){m.textContent="Customer profile missing.";return}
+  if(p.data().status==="blacklisted"){m.textContent="This Customer ID is blacklisted.";return}
+  location.href="customer.html";
+ }catch(e){m.textContent=friendly(e)}
+};
+document.querySelector("#adminForm").onsubmit=async e=>{
+ e.preventDefault(); const m=document.querySelector("#adminMsg");m.textContent="Checking...";
+ try{
+  const c=await signInWithEmailAndPassword(auth,document.querySelector("#adminEmail").value.trim(),document.querySelector("#adminPassword").value);
+  if(c.user.uid!==ADMIN_UID){m.textContent="Invalid Admin ID.";return}
+  const p=await getDoc(doc(db,"admins",ADMIN_UID));
+  if(!p.exists()||p.data().status!=="active"){m.textContent="Admin profile missing or inactive.";return}
+  location.href="dashboard.html";
+ }catch(e){m.textContent=friendly(e)}
+};
+onAuthStateChanged(auth,async u=>{if(!u)return;if(u.uid===ADMIN_UID){try{const p=await getDoc(doc(db,"admins",ADMIN_UID));if(p.exists()&&p.data().status==="active")location.href="dashboard.html"}catch{}}});
+</script>
+</body></html>
