@@ -1,18 +1,11 @@
-ZENO LIFE MEDICARE - GITHUB READY
+Zeno Life Medicare — Final A-to-Z package
 
-Firebase Web App config has been filled in from the config supplied by the user.
+1) Upload the contents of this zeno-final folder to the GitHub Pages folder/repository.
+2) Firebase Web config is already included in firebase-config.js.
+3) Enable Firebase Authentication -> Email/Password.
+4) Create Firestore Database.
+5) Publish firestore.rules in Firestore -> Rules.
+6) Add your GitHub Pages hostname under Firebase Authentication -> Settings -> Authorized domains.
+7) If an old page design appears, hard refresh the GitHub Pages site (or open it in a private/incognito window). CSS uses a version query to avoid stale browser cache.
 
-Project ID: zeno-life-medicare
-Admin UID: s1qDKY8MuXN4pgi5k69WxSxLUkW2
-
-Upload all files in this folder to your GitHub Pages repository.
-
-IMPORTANT FIREBASE SETUP:
-1. Firebase Authentication -> Sign-in method -> Email/Password must be enabled.
-2. Firestore Database must be created.
-3. Publish the included firestore.rules.
-4. Firebase Authentication -> Settings -> Authorized domains: add your exact GitHub Pages domain, e.g. YOURNAME.github.io.
-5. The Admin Auth user must have UID s1qDKY8MuXN4pgi5k69WxSxLUkW2.
-6. Firestore admins document ID must be the same Admin UID and contain role=admin, status=active.
-
-The Firebase Web API key is client-side configuration; do not put service-account/private credentials in this website.
+Important: The Firebase Web API key is a client-side configuration value. Do not put service-account JSON or private credentials in this site.

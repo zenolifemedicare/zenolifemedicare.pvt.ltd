@@ -1,9 +1,9 @@
 import {auth,db,app} from "./firebase.js";
 import {firebaseConfig,ADMIN_UID,CUSTOMER_EMAIL_SUFFIX} from "./firebase-config.js";
-import {onAuthStateChanged,signOut,createUserWithEmailAndPassword,updatePassword} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
-import {initializeApp,getApps} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
-import {getAuth as getAuth2,signOut as signOut2} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
-import {collection,getDocs,getDoc,doc,setDoc,addDoc,updateDoc,deleteDoc,query,where,orderBy,limit,serverTimestamp,writeBatch} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+import {onAuthStateChanged,signOut,createUserWithEmailAndPassword,updatePassword} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+import {initializeApp,getApps} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+import {getAuth as getAuth2,signOut as signOut2} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+import {collection,getDocs,getDoc,doc,setDoc,addDoc,updateDoc,deleteDoc,query,where,orderBy,limit,serverTimestamp,writeBatch} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 const seed=await (await fetch("./data/products.json")).json();
 const $=s=>document.querySelector(s),main=$("#main"),modal=$("#modal"),body=$("#modalBody"),money=n=>`₹${Number(n||0).toFixed(2)}`,esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
 let cache={customers:[],medicines:[],orders:[],bills:[],purchases:[],ledger:[],profit:[]};
