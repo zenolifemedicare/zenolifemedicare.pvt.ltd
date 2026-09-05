@@ -1,59 +1,32 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
+    function signedIn(){ return request.auth != null; }
+    function isAdmin(){ return signedIn() && request.auth.uid == "s1qDKY8MuXN4pgi5k69WxSxLUkW2"; }
 
-    function signedIn() {
-      return request.auth != null;
-    }
-
-    function isAdmin() {
-      return signedIn()
-        && request.auth.uid == "s1qDKY8MuXN4pgi5k69WxSxLUkW2";
-    }
-
-    match /admins/{uid} {
-      allow read, write: if isAdmin() && uid == request.auth.uid;
-    }
-
+    match /admins/{uid} { allow read, write: if isAdmin() && uid == request.auth.uid; }
     match /customers/{uid} {
       allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
       allow create, update, delete: if isAdmin();
     }
-
     match /medicinesPublic/{id} {
       allow read: if signedIn();
       allow create, update, delete: if isAdmin();
     }
-
-    match /medicinesPrivate/{id} {
-      allow read, write: if isAdmin();
-    }
-
+    match /medicinesPrivate/{id} { allow read, write: if isAdmin(); }
     match /orders/{id} {
-      allow read: if isAdmin()
-        || (signedIn() && resource.data.customerUid == request.auth.uid);
-      allow create: if signedIn()
-        && request.resource.data.customerUid == request.auth.uid;
+      allow read: if isAdmin() || (signedIn() && resource.data.customerUid == request.auth.uid);
+      allow create: if signedIn() && request.resource.data.customerUid == request.auth.uid;
       allow update, delete: if isAdmin();
     }
-
     match /bills/{id} {
-      allow read: if isAdmin()
-        || (signedIn() && resource.data.customerUid == request.auth.uid);
+      allow read: if isAdmin() || (signedIn() && resource.data.customerUid == request.auth.uid);
       allow write: if isAdmin();
     }
-
-    match /purchases/{id} {
-      allow read, write: if isAdmin();
-    }
-
-    match /profitTransactions/{id} {
-      allow read, write: if isAdmin();
-    }
-
-    match /{document=**} {
-      allow read, write: if false;
-    }
+    match /purchases/{id} { allow read, write: if isAdmin(); }
+    match /ledger/{id} { allow read, write: if isAdmin(); }
+    match /profitTransactions/{id} { allow read, write: if isAdmin(); }
+    match /settings/{id} { allow read: if signedIn(); allow write: if isAdmin(); }
+    match /{document=**} { allow read, write: if false; }
   }
 }
