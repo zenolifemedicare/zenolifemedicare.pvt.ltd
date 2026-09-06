@@ -1,17 +1,18 @@
 import {auth,db} from "./firebase.js";
 import {ADMIN_UID,CUSTOMER_EMAIL_SUFFIX,ADMIN_LOGIN_ID} from "./firebase-config.js";
 import {signInWithEmailAndPassword,signOut} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
-import {doc,getDoc} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
 const $ = s => document.querySelector(s);
 
 function friendlyError(e){
   const c = e?.code || "";
-  if(c.includes("invalid-api-key")) return "Firebase API key invalid. Firebase Console se current Web App config check karo.";
-  if(c.includes("unauthorized-domain")) return "This website domain Firebase Authentication me Authorized Domains me add nahi hai.";
-  if(c.includes("network-request-failed") || c.includes("network")) return "Internet/Firebase connection problem. Internet check karke dobara try karo.";
-  if(c.includes("invalid-credential") || c.includes("wrong-password") || c.includes("user-not-found")) return "Invalid Admin ID/email or password.";
-  if(c.includes("too-many-requests")) return "Too many attempts. Thodi der baad dobara try karo.";
+  if(c.includes("invalid-api-key")) return "Firebase API key invalid hai. firebase-config.js check karo.";
+  if(c.includes("unauthorized-domain")) return "GitHub Pages domain Firebase Authentication ke Authorized Domains me add nahi hai.";
+  if(c.includes("app-not-authorized")) return "Firebase Authentication ne is website domain ko authorize nahi kiya hai.";
+  if(c.includes("operation-not-allowed")) return "Firebase Authentication me Email/Password sign-in enable nahi hai.";
+  if(c.includes("network-request-failed") || c.includes("network") || c.includes("network-timeout")) return "Firebase server se connection nahi ho raha. Agar page load ho raha hai to Firebase/Auth settings ya network blocking check karo.";
+  if(c.includes("invalid-credential") || c.includes("wrong-password") || c.includes("user-not-found")) return "Admin email/password galat hai.";
+  if(c.includes("too-many-requests")) return "Bahut attempts ho gaye. Thodi der baad dobara try karo.";
   return e?.message || "Login failed. Dobara try karo.";
 }
 
@@ -54,13 +55,12 @@ $("#adminForm").onsubmit=async e=>{
   const input=$("#aid").value.trim();
   const password=$("#apw").value;
   // Admin ID mode: type ADMIN. Email mode is also supported for Firebase Auth.
-  const email = input.toUpperCase()===ADMIN_LOGIN_ID ? prompt("Admin email enter karo (sirf pehli baar):")?.trim() : input;
+  const configuredAdminEmail = "mrbityur@gmail.com";
+  const email = input.toUpperCase()===ADMIN_LOGIN_ID ? configuredAdminEmail : input;
   if(!email){m.textContent="Admin ID/email required.";return}
   try{
     const c=await withTimeout(signInWithEmailAndPassword(auth,email,password));
     if(c.user.uid!==ADMIN_UID){await signOut(auth);m.textContent="Invalid Admin ID.";return}
-    const p=await withTimeout(getDoc(doc(db,"admins",ADMIN_UID)));
-    if(!p.exists()||p.data().status!=="active"){await signOut(auth);m.textContent="Admin profile missing/inactive.";return}
     location.href="admin.html";
   }catch(e){m.textContent=friendlyError(e)}
 };

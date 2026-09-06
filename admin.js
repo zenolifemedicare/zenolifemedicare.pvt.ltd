@@ -31,4 +31,12 @@ async function confirmOrder(o){if(!confirm(`Confirm ${o.orderId}? Stock will be 
 async function paymentForm(){open(`<h2>Record Customer Payment</h2><form id="payf" class="form"><label>Customer<select id="cus">${cache.customers.map(c=>`<option value="${c.id}">${esc(c.name||c.customerId)}</option>`).join('')}</select></label><label>Amount<input id="amt" type="number" step="0.01" required></label><label>Reference<input id="ref"></label><label>Note<textarea id="note"></textarea></label><button class="primary">Save Payment</button></form>`);$("#payf").onsubmit=async e=>{e.preventDefault();const c=cache.customers.find(x=>x.id===$("#cus").value);await addDoc(collection(db,'ledger'),{customerUid:c.id,customerName:c.name,type:'payment',amount:Number($("#amt").value),reference:$("#ref").value,note:$("#note").value,date:new Date().toISOString().slice(0,10),createdAt:serverTimestamp()});modal.classList.add('hidden');render('ledger')}}
 async function printBill(b){const s=await getDoc(doc(db,'settings','main')),d=s.exists()?s.data():{name:'Zeno Life Medicare'};open(`<div class="invoice"><h1>${esc(d.name)}</h1><p>${esc(d.address||'')} ${d.mobile?'• '+esc(d.mobile):''} ${d.email?'• '+esc(d.email):''}</p><hr><div class="grid2"><div>Bill No.: <b>${esc(b.billNo)}</b><br>Date: ${esc(b.date)}</div><div>Customer: <b>${esc(b.customerName)}</b><br>Store: ${esc(b.storeName||'')}<br>Mobile: ${esc(b.mobile||'')}</div></div><br>${table(['S.No.','Medicine','Batch','MRP','N. Rate','Qty','Amount'],(b.items||[]).map((i,n)=>`<tr><td>${n+1}</td><td>${esc(i.name)}</td><td>${esc(i.batch)}</td><td>—</td><td>${money(i.nRate)}</td><td>${i.qty}</td><td>${money(i.nRate*i.qty)}</td></tr>`))}<div class="total"><b>Grand Total</b><b>${money(b.total)}</b></div><p style="margin-top:60px;text-align:right">Authority Signature</p><button class="primary no-print" onclick="window.print()">Print / Save PDF</button></div>`)}
 $("#logout").onclick=()=>signOut(auth).then(()=>location.href='index.html');
-onAuthStateChanged(auth,async u=>{if(!u||u.uid!==ADMIN_UID){location.href='index.html';return}const a=await getDoc(doc(db,'admins',ADMIN_UID));if(!a.exists()||a.data().status!=='active'){await signOut(auth);location.href='index.html';return}nav();render('dashboard')});
+onAuthStateChanged(auth,async u=>{
+  if(!u||u.uid!==ADMIN_UID){location.href='index.html';return}
+  nav();
+  try {
+    await render('dashboard');
+  } catch(e) {
+    main.innerHTML=`<div class="panel"><h2>Firebase connection problem</h2><p>${esc(e?.message||'Could not load Firestore data.')}</p><p>Authentication successful hai, lekin Firestore data load nahi hua.</p><button class="primary" onclick="location.reload()">Retry</button></div>`;
+  }
+});
