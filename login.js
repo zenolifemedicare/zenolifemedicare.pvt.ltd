@@ -1,8 +1,66 @@
 import {auth,db} from "./firebase.js";
-import {firebaseConfig,ADMIN_UID,CUSTOMER_EMAIL_SUFFIX,ADMIN_LOGIN_ID} from "./firebase-config.js";
+import {ADMIN_UID,CUSTOMER_EMAIL_SUFFIX,ADMIN_LOGIN_ID} from "./firebase-config.js";
 import {signInWithEmailAndPassword,signOut} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
 import {doc,getDoc} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
-const err=e=>{const c=e?.code||"";if(c.includes("invalid-api-key"))return "Firebase API key invalid. Firebase Console se current Web App config copy karke firebase-config.js me paste karo.";if(c.includes("invalid-credential")||c.includes("wrong-password")||c.includes("user-not-found"))return "Invalid ID/email or password.";if(c.includes("network"))return "Internet/network problem.";return e?.message||"Login failed."};
-document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.querySelector("#customerForm").classList.toggle("hidden",b.dataset.tab!=="customer");document.querySelector("#adminForm").classList.toggle("hidden",b.dataset.tab!=="admin")});
-document.querySelector("#customerForm").onsubmit=async e=>{e.preventDefault();const m=document.querySelector("#cm");m.textContent="Checking...";const id=document.querySelector("#cid").value.trim().toLowerCase(),pw=document.querySelector("#cpw").value;if(!/^[a-z0-9._-]{3,40}$/.test(id)){m.textContent="Invalid Customer ID.";return}try{const c=await signInWithEmailAndPassword(auth,id+CUSTOMER_EMAIL_SUFFIX,pw);const p=await getDoc(doc(db,"customers",c.user.uid));if(!p.exists()){await signOut(auth);m.textContent="Customer profile not found.";return}if(p.data().status==="blacklisted"){await signOut(auth);m.textContent="This Customer ID is blacklisted.";return}location.href="customer.html"}catch(e){m.textContent=err(e)}};
-document.querySelector("#adminForm").onsubmit=async e=>{e.preventDefault();const m=document.querySelector("#am");m.textContent="Checking...";try{const input=document.querySelector("#aid").value.trim(),email=input.toUpperCase()===ADMIN_LOGIN_ID?prompt("Admin ID ke liye Firebase Admin email enter karo:"):input;if(!email){m.textContent="Admin email required.";return}const c=await signInWithEmailAndPassword(auth,email,document.querySelector("#apw").value);if(c.user.uid!==ADMIN_UID){await signOut(auth);m.textContent="Invalid Admin ID.";return}const p=await getDoc(doc(db,"admins",ADMIN_UID));if(!p.exists()||p.data().status!=="active"){await signOut(auth);m.textContent="Admin profile missing/inactive.";return}location.href="admin.html"}catch(e){m.textContent=err(e)}};
+
+const $ = s => document.querySelector(s);
+
+function friendlyError(e){
+  const c = e?.code || "";
+  if(c.includes("invalid-api-key")) return "Firebase API key invalid. Firebase Console se current Web App config check karo.";
+  if(c.includes("unauthorized-domain")) return "This website domain Firebase Authentication me Authorized Domains me add nahi hai.";
+  if(c.includes("network-request-failed") || c.includes("network")) return "Internet/Firebase connection problem. Internet check karke dobara try karo.";
+  if(c.includes("invalid-credential") || c.includes("wrong-password") || c.includes("user-not-found")) return "Invalid Admin ID/email or password.";
+  if(c.includes("too-many-requests")) return "Too many attempts. Thodi der baad dobara try karo.";
+  return e?.message || "Login failed. Dobara try karo.";
+}
+
+function withTimeout(promise, ms=12000){
+  return Promise.race([
+    promise,
+    new Promise((_, reject)=>setTimeout(()=>{
+      const e = new Error("Firebase request timed out");
+      e.code = "network-timeout";
+      reject(e);
+    }, ms))
+  ]);
+}
+
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+  b.classList.add("active");
+  $("#customerForm").classList.toggle("hidden",b.dataset.tab!=="customer");
+  $("#adminForm").classList.toggle("hidden",b.dataset.tab!=="admin");
+});
+
+$("#customerForm").onsubmit=async e=>{
+  e.preventDefault();
+  const m=$("#cm"); m.textContent="Checking...";
+  const id=$("#cid").value.trim().toLowerCase();
+  const pw=$("#cpw").value;
+  if(!/^[a-z0-9._-]{3,40}$/.test(id)){m.textContent="Invalid Customer ID.";return}
+  try{
+    const c=await withTimeout(signInWithEmailAndPassword(auth,id+CUSTOMER_EMAIL_SUFFIX,pw));
+    const p=await withTimeout(getDoc(doc(db,"customers",c.user.uid)));
+    if(!p.exists()){await signOut(auth);m.textContent="Customer profile not found.";return}
+    if(p.data().status==="blacklisted"){await signOut(auth);m.textContent="This Customer ID is blacklisted.";return}
+    location.href="customer.html";
+  }catch(e){m.textContent=friendlyError(e)}
+};
+
+$("#adminForm").onsubmit=async e=>{
+  e.preventDefault();
+  const m=$("#am"); m.textContent="Checking...";
+  const input=$("#aid").value.trim();
+  const password=$("#apw").value;
+  // Admin ID mode: type ADMIN. Email mode is also supported for Firebase Auth.
+  const email = input.toUpperCase()===ADMIN_LOGIN_ID ? prompt("Admin email enter karo (sirf pehli baar):")?.trim() : input;
+  if(!email){m.textContent="Admin ID/email required.";return}
+  try{
+    const c=await withTimeout(signInWithEmailAndPassword(auth,email,password));
+    if(c.user.uid!==ADMIN_UID){await signOut(auth);m.textContent="Invalid Admin ID.";return}
+    const p=await withTimeout(getDoc(doc(db,"admins",ADMIN_UID)));
+    if(!p.exists()||p.data().status!=="active"){await signOut(auth);m.textContent="Admin profile missing/inactive.";return}
+    location.href="admin.html";
+  }catch(e){m.textContent=friendlyError(e)}
+};
